@@ -179,28 +179,44 @@ export default function Home() {
     });
     let planilhaCount = 1;
     let data: any[] = [];
+    data.push({}); // Linha em branco após o cabeçalho
+    let primeiroGrupo = true;
     ordem.forEach((origem) => {
       if (origem !== 'comparacao') {
-        data.push({ Campanha: `${planilhaCount++}º Planilha` });
+        // Adiciona linha em branco antes de cada grupo, exceto o primeiro
+        if (!primeiroGrupo) data.push({});
+        primeiroGrupo = false;
+        const nomeArquivo = metaFiles[planilhaCount - 1]?.name?.replace(/\.(xlsx|xls|csv)$/i, '') || `${planilhaCount}º Planilha`;
+        data.push({ 'Nome da campanha': nomeArquivo });
+        planilhaCount++;
       }
       grupos[origem].forEach((linha: any) => {
+        // Formatar a data para mostrar apenas dia e mês
+        const dataCompleta = linha.inicio;
+        let dataFormatada = dataCompleta;
+        if (dataCompleta && dataCompleta.includes('-')) {
+          const [ano, mes, dia] = dataCompleta.split('-');
+          dataFormatada = `${dia}-${mes}`;
+        }
+
         data.push({
           'Nome da campanha': linha.nome,
-          'Início do relatório': linha.inicio,
-          'Resultados (Meta)': linha.resultados,
-          'Custo por resultados': linha.custo_por_resultados !== undefined ? `R$ ${Number(linha.custo_por_resultados).toFixed(2)}` : '-',
-          'Leads (Comparação)': linha.leads,
-          'Visitas Agendadas': linha.visitas_agendadas,
+          'Data': dataFormatada,
+          'META': linha.resultados,
+          'Custo': linha.custo_por_resultados !== undefined ? `R$ ${Number(linha.custo_por_resultados).toFixed(2)}` : '-',
+          'C2S': linha.leads,
+          'Visitas': linha.visitas_agendadas,
         });
       });
     });
     // Linha de total
     data.push({
       'Nome da campanha': 'TOTAL',
-      'Resultados (Meta)': totalMeta,
-      'Custo por resultados': '-',
-      'Leads (Comparação)': totalLeads,
-      'Visitas Agendadas': totalVisitasAgendadas,
+      'Data': '',
+      'META': totalMeta,
+      'Custo': '-',
+      'C2S': totalLeads,
+      'Visitas': totalVisitasAgendadas,
     });
     // Criar worksheet e workbook
     const ws = XLSX.utils.json_to_sheet(data, { skipHeader: false });
@@ -301,11 +317,11 @@ export default function Home() {
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                 <tr style={{ background: '#23243a', color: '#fff', borderBottom: '2px solid #5f5fff' }}>
                   <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'left', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Nome da campanha</th>
-                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'center', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Início do relatório</th>
-                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Resultados (Meta)</th>
-                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Custo por resultados</th>
-                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Leads (Comparação)</th>
-                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Visitas Agendadas</th>
+                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'center', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Data</th>
+                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>META</th>
+                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Custo</th>
+                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>C2S</th>
+                  <th style={{ border: 'none', padding: 16, fontWeight: 900, fontSize: 17, textAlign: 'right', background: '#23243a', color: '#fff', letterSpacing: 0.5, position: 'sticky', top: 0 }}>Visitas</th>
                 </tr>
               </thead>
               <tbody>
@@ -324,18 +340,29 @@ export default function Home() {
                     if (b === 'comparacao') return -1;
                     return a.localeCompare(b);
                   });
-                  let planilhaCount = 1;
-                  return ordem.flatMap((origem) => {
+                  // Mapeamento dos nomes dos arquivos para cada grupo meta
+                  const metaFileNames = metaFiles.map((file) => file.name);
+                  return ordem.flatMap((origem, idx) => {
                     const isComparacao = origem === 'comparacao';
-                    const header = isComparacao ? null : (
-                      <tr key={'sep-' + origem}>
-                        <td colSpan={6} style={{ padding: 0, background: 'transparent', border: 'none' }}>
-                          <Box sx={{ my: 3, p: 2, borderRadius: 3, bgcolor: '#292a3a', boxShadow: 2, border: '1px solid #35364a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography sx={{ fontWeight: 900, color: '#fff', fontSize: 18, letterSpacing: 0.5, fontFamily: 'Inter, Poppins, Roboto, Arial, sans-serif' }}>{planilhaCount++}º Planilha</Typography>
-                          </Box>
-                        </td>
-                      </tr>
-                    );
+                    let header = null;
+                    if (!isComparacao) {
+                      // Extrair o índice do grupo meta (ex: meta1 -> 0)
+                      const match = origem.match(/^meta(\d+)$/);
+                      let nomeArquivo = '';
+                      if (match) {
+                        const fileIdx = parseInt(match[1], 10) - 1;
+                        nomeArquivo = metaFileNames[fileIdx]?.replace(/\.(xlsx|xls|csv)$/i, '') || `${match[1]}º Planilha`;
+                      }
+                      header = (
+                        <tr key={'sep-' + origem}>
+                          <td colSpan={6} style={{ padding: 0, background: 'transparent', border: 'none' }}>
+                            <Box sx={{ my: 3, p: 2, borderRadius: 3, bgcolor: '#292a3a', boxShadow: 2, border: '1px solid #35364a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Typography sx={{ fontWeight: 900, color: '#fff', fontSize: 18, letterSpacing: 0.5, fontFamily: 'Inter, Poppins, Roboto, Arial, sans-serif' }}>{nomeArquivo}</Typography>
+                            </Box>
+                          </td>
+                        </tr>
+                      );
+                    }
                     return [
                       header,
                       ...grupos[origem].map((linha: any, idx: number) => (
@@ -388,24 +415,30 @@ export default function Home() {
         {/* Bloco de métricas dos totais (sem gráfico) */}
         {resultados?.linhas && resultados.linhas.length > 0 && (
           <Grid container spacing={3} sx={{ mb: 2, mt: 2 }}>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <Paper sx={{ bgcolor: '#23243a', color: '#fff', p: 3, boxShadow: 2, textAlign: 'center', borderRadius: 3 }}>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>Total Resultados (Meta)</Typography>
                 <Typography variant="h4" fontWeight={900}>{resultados?.totais?.resultados ?? 0}</Typography>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <Paper sx={{ bgcolor: '#23243a', color: '#fff', p: 3, boxShadow: 2, textAlign: 'center', borderRadius: 3 }}>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>Total Leads (Comparação)</Typography>
                 <Typography variant="h4" fontWeight={900}>{resultados?.totais?.leads ?? 0}</Typography>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <Paper sx={{ bgcolor: '#23243a', color: '#fff', p: 3, boxShadow: 2, textAlign: 'center', borderRadius: 3 }}>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>Diferença</Typography>
                 <Typography variant="h4" fontWeight={900} color={((resultados?.totais?.leads ?? 0) - (resultados?.totais?.resultados ?? 0)) === 0 ? '#00e676' : '#ff5252'}>
                   {(resultados?.totais?.leads ?? 0) - (resultados?.totais?.resultados ?? 0)}
                 </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Paper sx={{ bgcolor: '#23243a', color: '#fff', p: 3, boxShadow: 2, textAlign: 'center', borderRadius: 3 }}>
+                <Typography variant="subtitle2" fontWeight={700} mb={1}>Total Visitas Agendadas</Typography>
+                <Typography variant="h4" fontWeight={900}>{totalVisitasAgendadas}</Typography>
               </Paper>
             </Grid>
           </Grid>
