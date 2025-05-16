@@ -16,7 +16,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Home as HomeIcon, TableChart, BarChart, Settings, FileUpload, Assessment, Warning, People } from '@mui/icons-material';
-import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 
 ChartJS.register(
   CategoryScale,
@@ -163,7 +163,7 @@ export default function Home() {
   const totalVisitasAgendadas = resultados?.linhas?.reduce((acc: number, l: any) => acc + (Number(l.visitas_agendadas) || 0), 0) || 0;
 
   // Função para exportar para Excel
-  const handleExportar = async () => {
+  const handleExportar = () => {
     if (!resultados?.linhas || resultados.linhas.length === 0) return;
     // Agrupar por origem
     const grupos: { [origem: string]: any[] } = {};
@@ -217,66 +217,12 @@ export default function Home() {
       'C2S': totalLeads,
       'Visitas': totalVisitasAgendadas,
     });
-
-    // --- NOVO: Exportação com exceljs ---
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Comparativo');
-
-    // Cabeçalho
-    const header = ['Nome da campanha', 'Data', 'META', 'Custo', 'C2S', 'Visitas'];
-    worksheet.addRow(header);
-    // Linha em branco após o cabeçalho
-    worksheet.addRow([]);
-
-    // Adiciona os dados
-    data.forEach((row) => {
-      worksheet.addRow([
-        row['Nome da campanha'] ?? '',
-        row['Data'] ?? '',
-        row['META'] ?? '',
-        row['Custo'] ?? '',
-        row['C2S'] ?? '',
-        row['Visitas'] ?? '',
-      ]);
-    });
-
-    // Adiciona bordas e centraliza colunas numéricas
-    worksheet.eachRow((row, rowNumber) => {
-      row.eachCell((cell, colNumber) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
-        };
-        // Centralizar colunas numéricas (META, Custo, C2S, Visitas)
-        if ([3, 4, 5, 6].includes(colNumber)) {
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        }
-      });
-    });
-
-    // Ajusta largura das colunas
-    worksheet.columns = [
-      { width: 45 }, // Nome da campanha
-      { width: 10 }, // Data
-      { width: 8 },  // META
-      { width: 12 }, // Custo
-      { width: 8 },  // C2S
-      { width: 8 },  // Visitas
-    ];
-
-    // Gera o arquivo e faz download
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'comparativo_resultados.xlsx';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    // Criar worksheet e workbook
+    const ws = XLSX.utils.json_to_sheet(data, { skipHeader: false });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Comparativo');
+    // Gerar arquivo
+    XLSX.writeFile(wb, 'comparativo_resultados.xlsx');
   };
 
   return (
