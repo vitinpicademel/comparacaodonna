@@ -198,19 +198,7 @@ export default function Dashboard() {
                 Leads Arquivados
               </Typography>
               <Typography variant="h4">
-                {(() => {
-                  let totalArquivados = 0;
-                  if (resultados?.linhas) {
-                    resultados.linhas.forEach((linha: any) => {
-                      if (linha.detalhes) {
-                        totalArquivados += linha.detalhes.filter((lead: any) => {
-                          return Object.values(lead).some(v => (typeof v === 'string' && v.trim().toLowerCase() === 'arquivado'));
-                        }).length;
-                      }
-                    });
-                  }
-                  return totalArquivados;
-                })()}
+                {resultados?.leads_arquivados_comparacao?.length || 0}
               </Typography>
             </CardContent>
           </Card>
@@ -329,19 +317,7 @@ export default function Dashboard() {
                 Total de Leads Arquivados
               </Typography>
               <Typography variant="h2" sx={{ color: '#ff5252', fontWeight: 900 }}>
-                {(() => {
-                  let totalArquivados = 0;
-                  if (resultados?.linhas) {
-                    resultados.linhas.forEach((linha: any) => {
-                      if (linha.detalhes) {
-                        totalArquivados += linha.detalhes.filter((lead: any) => {
-                          return Object.values(lead).some(v => (typeof v === 'string' && v.trim().toLowerCase() === 'arquivado'));
-                        }).length;
-                      }
-                    });
-                  }
-                  return totalArquivados;
-                })()}
+                {resultados?.leads_arquivados_comparacao?.length || 0}
               </Typography>
               <Box sx={{ mt: 4, textAlign: 'left', overflowX: 'auto' }}>
                 <Typography variant="h6" sx={{ mb: 2, color: '#fff' }}>
@@ -357,20 +333,14 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {resultados?.linhas?.flatMap((linha: any) =>
-                      linha.detalhes
-                        ? linha.detalhes
-                            .filter((lead: any) => Object.values(lead).some(v => (typeof v === 'string' && v.trim().toLowerCase() === 'arquivado')))
-                            .map((lead: any, idx: number) => (
-                              <tr key={idx} style={{ background: idx % 2 === 0 ? '#23243a' : '#292a3a' }}>
-                                <td style={{ padding: 12 }}>{lead['Usuário responsável atual'] || lead['usuario responsavel atual'] || '-'}</td>
-                                <td style={{ padding: 12 }}>{lead.status || lead['Status'] || '-'}</td>
-                                <td style={{ padding: 12 }}>{lead.titulo || lead['Título'] || '-'}</td>
-                                <td style={{ padding: 12 }}>{lead['Nome do cliente'] || '-'}</td>
-                              </tr>
-                            ))
-                        : []
-                    )}
+                    {resultados?.leads_arquivados_comparacao?.map((lead: any, idx: number) => (
+                      <tr key={idx} style={{ background: idx % 2 === 0 ? '#23243a' : '#292a3a' }}>
+                        <td style={{ padding: 12 }}>{lead.usuario_responsavel_atual || '-'}</td>
+                        <td style={{ padding: 12 }}>{lead.status || '-'}</td>
+                        <td style={{ padding: 12 }}>{lead.titulo || '-'}</td>
+                        <td style={{ padding: 12 }}>{lead.nome_do_cliente || '-'}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </Box>
