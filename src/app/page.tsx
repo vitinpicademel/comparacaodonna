@@ -17,6 +17,7 @@ import {
 } from 'chart.js';
 import { Home as HomeIcon, TableChart, BarChart, Settings, FileUpload, Assessment, Warning, People } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
+import { useUploadStore } from './store';
 
 ChartJS.register(
   CategoryScale,
@@ -57,9 +58,12 @@ interface ResultadoComparacaoSimples {
 }
 
 export default function Home() {
-  const [metaFiles, setMetaFiles] = useState<File[]>([]);
-  const [comparacaoFile, setComparacaoFile] = useState<File | null>(null);
-  const [resultados, setResultados] = useState<any>(null);
+  const metaFiles = useUploadStore((state) => state.metaFiles);
+  const setMetaFiles = useUploadStore((state) => state.setMetaFiles);
+  const comparacaoFile = useUploadStore((state) => state.comparacaoFile);
+  const setComparacaoFile = useUploadStore((state) => state.setComparacaoFile);
+  const resultados = useUploadStore((state) => state.resultados);
+  const setResultados = useUploadStore((state) => state.setResultados);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [detalhesAbertos, setDetalhesAbertos] = useState<string | null>(null);
