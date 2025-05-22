@@ -461,7 +461,19 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="nome" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(
+                        value: any,
+                        name: string,
+                        props: any
+                      ) => {
+                        // props.payload.nome é o nome da campanha
+                        return [
+                          `${value} (Campanha: ${props.payload.nome})`,
+                          'Quantidade'
+                        ];
+                      }}
+                    />
                     <Legend />
                     <Bar dataKey="quantidade" fill="#8884d8" />
                   </BarChart>
